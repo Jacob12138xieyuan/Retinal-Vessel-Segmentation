@@ -7,13 +7,15 @@ xg(find(xg<20)) = 0; %make background all 0
 
 %segment the foreground area
 xt = xg; 
-xt(find(xt>=20)) = 255;
-figure(2); imshow(xt);
-title('Foreground image');
+xf = xg;
+xt(find(xt>=20)) = 1;
+xf(find(xf>=20)) = 255;
+figure(2); imshow(xf);
+title('Foreground area');
 
 %segment the background area
-xc = imcomplement(xt); %complement of foreground(background)
-se = strel('square',4); %define a filter
+xc = imcomplement(xf); %complement of foreground(background)
+se = strel('square',7); %define a filter
 xc = imdilate(xc,se); %dilate background to cover circle edge
 figure(3); imshow(xc);
 title('background image');
@@ -26,7 +28,13 @@ xg = medfilt2(xg); %median filter to reduce noise while keep edge
 figure(5); imshow(xg);
 title('Reduced noise image');
 
-%find adaptive threshhold and make it binary image 
+%find average value of foreground
+foreground = xg.*xt;
+n = sum(sum(xt));
+m = sum(sum(foreground))/n;
+xg(find(xg<10)) = m;
+
+%find adaptive threshhold and make it binary image
 T = adaptthresh(xg, 0.72,'NeighborhoodSize', 25);
 M = imbinarize(xg,T);
 xoutput = M|xc;%union with white background
@@ -54,6 +62,6 @@ tst = zeros(h,w);
 tst(find(output == truth))=1;
 figure(9); imshow(tst, []);
 title('Diffenrence image');
-accuracy = 100*sum(sum(tst))/(h*w) %accuracy = 95.0079
-%imwrite(output,'24_trainingmap.tif','tiff')
+accuracy = 100*sum(sum(tst))/(h*w) %accuracy = 95.0497
+imwrite(output,'24_trainingmap.tif','tiff')
 %imwrite(output,'25_testmap.tif','tiff')
